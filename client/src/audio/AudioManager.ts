@@ -40,16 +40,22 @@ const WALK_GAIN = 0.9;
  * Check `npm run size:client` after changing any of the three.
  */
 
-/** The supplied background track ("anime music 2.mp3"; the space is percent-encoded). Streamed, never decoded. */
-const MUSIC_URL = '/audio/anime%20music%202.mp3';
+/**
+ * The supplied background track. Streamed, never decoded.
+ *
+ * NO SPACES in any shipped file name: Bloxity Hosting answers "400 Bad
+ * Request" for a path containing one (encoded or not), so a spaced name that
+ * plays on the dev server is silent on the live builds.
+ */
+const MUSIC_URL = '/audio/anime-music-2.mp3';
 
 /**
  * The supplied one-shots, by the sound they stand in for.
  *
- * `enemy death.mp3` is the DEATH, which is what falling is in this game: every
+ * `enemy-death.mp3` is the DEATH, which is what falling is in this game: every
  * death on this course is a drop into the lava.
  *
- * `anime shine.mp3` is the SPRINT kicking in (`whoosh`): the anime power-up
+ * `anime-shine.mp3` is the SPRINT kicking in (`whoosh`): the anime power-up
  * shine the moment auto-sprint starts.
  *
  * `walk.mp3` is the FOOTFALL, and it is the sound the player hears more
@@ -60,9 +66,9 @@ const MUSIC_URL = '/audio/anime%20music%202.mp3';
  */
 const SAMPLE_URLS: Partial<Record<SoundName, string>> = {
   // The supplied death: every death here is a drop into the lava.
-  death: '/audio/enemy%20death.mp3',
+  death: '/audio/enemy-death.mp3',
   // The supplied shine, as the sprint starts.
-  whoosh: '/audio/anime%20shine.mp3',
+  whoosh: '/audio/anime-shine.mp3',
   // The supplied jump.
   jump: '/audio/jump.mp3',
   // The supplied footsteps, looped while running (`setFootsteps`).

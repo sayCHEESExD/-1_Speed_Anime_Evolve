@@ -9,7 +9,8 @@
  * at runtime, which is why this list is short and why it stays short.
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -35,9 +36,9 @@ const EXPECTED = [
   { path: 'assets/ui/aura.png', md5: 'f30df632e885addc0eeae9ca2753fe9c' },
   { path: 'assets/ui/Upgrades.png', md5: 'a66cd7a0756b236dce197af4ba44febb' },
   // The music, the lava death, the jump and the running footsteps.
-  { path: 'assets/audio/anime music 2.mp3', md5: '0f0e5dcef4b71df6fa51ccdd737e93de' },
-  { path: 'assets/audio/anime shine.mp3', md5: '722473eb2ce6ed998d762fe03225358f' },
-  { path: 'assets/audio/enemy death.mp3', md5: '180a30391ff7a7cb12e4f05f0f482539' },
+  { path: 'assets/audio/anime-music-2.mp3', md5: '0f0e5dcef4b71df6fa51ccdd737e93de' },
+  { path: 'assets/audio/anime-shine.mp3', md5: '722473eb2ce6ed998d762fe03225358f' },
+  { path: 'assets/audio/enemy-death.mp3', md5: '180a30391ff7a7cb12e4f05f0f482539' },
   { path: 'assets/audio/jump.mp3', md5: '77c58db6921be7b0c7a61903d38bbf30' },
   { path: 'assets/audio/walk.mp3', md5: '36e604035c1fc558b5d4a0a1bb3b6205' },
 ];
@@ -61,6 +62,20 @@ for (const asset of EXPECTED) {
     failures += 1;
   } else {
     console.log(`  ok    ${asset.path} (${size} bytes)`);
+  }
+}
+
+// Every shipped file name must be URL-safe. Bloxity Hosting answers "400 Bad
+// Request" for a path with a space in it (encoded or not), so a file that plays
+// on the dev server would be silently missing from the live builds.
+const walk = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory() ? walk(join(dir, entry.name)) : [relative(root, join(dir, entry.name)).split(sep).join('/')],
+  );
+for (const file of walk(join(root, 'assets'))) {
+  if (!/^[A-Za-z0-9._\-/]+$/.test(file)) {
+    console.error(`  FAIL  ${file} has a character a static host may refuse (use letters, digits, - _ . only)`);
+    failures += 1;
   }
 }
 
