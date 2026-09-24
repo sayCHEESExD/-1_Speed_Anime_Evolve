@@ -33,4 +33,11 @@ Client on http://localhost:5191, server on :2591. See `CLAUDE.md` for the rules 
 `.github/workflows/deploy.yml` publishes `dev` -> DEV and `main` -> PROD (game id `speed-anime-evolve`):
 the server image to GHCR (`ghcr.io/<owner>/speed-anime-evolve-server`, must be public), rolled on Legion
 with `seatCap` 15; the client zipped and uploaded to Bloxity Hosting. Secret: `LEGION_DEPLOY_TOKEN`
-(optional `GHCR_PUSH_TOKEN`).
+(optional `GHCR_PUSH_TOKEN`). The commit SHA is the deployed version of both halves.
+
+| Channel | Branch | Frontend | Backend (HTTP / WSS) |
+| --- | --- | --- | --- |
+| DEV | `dev` | https://speed-anime-evolve.dev.play.bloxity.io | https://speed-anime-evolve.dev.host.bloxity.io / `wss://speed-anime-evolve.dev.host.bloxity.io` |
+| PROD | `main` | https://speed-anime-evolve.play.bloxity.io | https://speed-anime-evolve.host.bloxity.io / `wss://speed-anime-evolve.host.bloxity.io` |
+
+The GHCR package must stay public: Bloxity pulls the image anonymously.

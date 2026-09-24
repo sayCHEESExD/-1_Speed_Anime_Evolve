@@ -50,6 +50,8 @@ export class Hud {
   private readonly pops = el('div');
   private readonly hint = el('div', 'ae-hint ae-text');
   private readonly music: HTMLButtonElement;
+  /** The Wins row: where the celebration's trophies fly to. */
+  private winsStat!: HTMLElement;
   private lastStage = '';
   private lastLevel = '';
 
@@ -63,7 +65,8 @@ export class Hud {
       row.append(el('span', 'ae-stat__icon', icon), text);
       return row;
     };
-    left.append(stat(ICON.rebirth, this.rebirthText), stat(ICON.trophy, this.winsText), stat(ICON.shoe, this.speedText));
+    this.winsStat = stat(ICON.trophy, this.winsText);
+    left.append(stat(ICON.rebirth, this.rebirthText), this.winsStat, stat(ICON.shoe, this.speedText));
     const grid = el('div', 'ae-tiles');
     for (const tile of TILES) {
       const button = el('button', `ae-tile ae-tile--${tile.name} ae-studs`);
@@ -174,6 +177,74 @@ export class Hud {
     node.innerHTML = `LEVEL ${level}!<small>Speed ${speed.toFixed(1)}</small>`;
     this.root.append(node);
     setTimeout(() => node.remove(), 1400);
+  }
+
+  /**
+   * THE TROPHY CELEBRATION for a claimed stage: a golden trophy bursts onto
+   * the screen in a burst of rays and confetti with "+N WINS!", bounces and
+   * wobbles, then flies into the Wins counter - with a stream of little
+   * trophies behind it - and the counter pops as each one lands. Pure CSS
+   * animation over the HUD: no assets, nothing per frame in script.
+   */
+  trophy(wins: number): void {
+    this.root.querySelector('.ae-trophy')?.remove();
+    const overlay = el('div', 'ae-trophy');
+    const fly = el('div', 'ae-trophy__fly');
+    const cup = el('div', 'ae-trophy__cup', ICON.trophy);
+    fly.append(cup);
+    const label = el('div', 'ae-trophy__text ae-text');
+    label.textContent = '+' + formatWins(wins) + (wins === 1 ? ' WIN!' : ' WINS!');
+    overlay.append(el('div', 'ae-trophy__rays'), el('div', 'ae-trophy__glow'), fly, label);
+
+    // Confetti, bursting out and falling a little, sized to the screen.
+    const reach = Math.min(window.innerWidth, window.innerHeight);
+    const colors = ['#ffe14a', '#ffb21f', '#ffffff', '#7fd8ff', '#ff6fae', '#8cf05a'];
+    for (let i = 0; i < 30; i += 1) {
+      const a = (i / 30) * Math.PI * 2 + Math.random() * 0.25;
+      const r = reach * (0.16 + Math.random() * 0.2);
+      const bit = el('span', 'ae-trophy__bit');
+      bit.style.setProperty('--x', Math.cos(a) * r + 'px');
+      bit.style.setProperty('--y', Math.sin(a) * r + reach * 0.08 + 'px');
+      bit.style.setProperty('--s', Math.round(Math.random() * 720 - 360) + 'deg');
+      bit.style.background = colors[i % colors.length]!;
+      bit.style.animationDelay = (Math.random() * 0.08).toFixed(2) + 's';
+      overlay.append(bit);
+    }
+    this.root.append(overlay);
+
+    // From the trophy's centre to the Wins icon.
+    const target = (this.winsStat.querySelector('.ae-stat__icon') as HTMLElement | null) ?? this.winsStat;
+    const from = overlay.getBoundingClientRect();
+    const to = target.getBoundingClientRect();
+    const dx = to.left + to.width / 2 - from.left + 'px';
+    const dy = to.top + to.height / 2 - from.top + 'px';
+    fly.style.setProperty('--dx', dx);
+    fly.style.setProperty('--dy', dy);
+    fly.addEventListener('animationend', () => this.bumpWins());
+
+    const minis = Math.min(7, 3 + Math.floor(Math.log10(wins + 1) * 2));
+    for (let k = 0; k < minis; k += 1) {
+      const mini = el('div', 'ae-trophy__mini', ICON.trophy);
+      const a = Math.random() * Math.PI * 2;
+      mini.style.setProperty('--mx', Math.cos(a) * reach * 0.12 + 'px');
+      mini.style.setProperty('--my', Math.sin(a) * reach * 0.08 + 'px');
+      mini.style.setProperty('--dx', dx);
+      mini.style.setProperty('--dy', dy);
+      mini.style.animationDelay = (0.5 + k * 0.09).toFixed(2) + 's';
+      mini.addEventListener('animationend', () => {
+        mini.remove();
+        this.bumpWins();
+      });
+      overlay.append(mini);
+    }
+    setTimeout(() => overlay.remove(), 2400);
+  }
+
+  /** The Wins counter pops (restarting the pop if one is still playing). */
+  private bumpWins(): void {
+    this.winsStat.classList.remove('is-bump');
+    void this.winsStat.offsetWidth;
+    this.winsStat.classList.add('is-bump');
   }
 
   /** The screen flushes orange as the lava takes the runner. */

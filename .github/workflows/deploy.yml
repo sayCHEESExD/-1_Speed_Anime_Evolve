@@ -131,12 +131,17 @@ jobs:
               echo "::error::GHCR_PUSH_TOKEN is set but GitHub did not accept it. It must be a classic PAT with the write:packages scope."
               exit 1
             fi
+            NAMESPACE="$LOGIN"
             echo "Pushing to ${LOGIN}'s own namespace (GHCR_PUSH_TOKEN)."
           else
-            LOGIN="${{ github.actor }}"
+            # The run's GITHUB_TOKEN may only publish packages to the
+            # REPOSITORY OWNER's namespace, whoever pushed the commit: the
+            # login is the actor, the namespace is always the owner.
+            LOGIN="${GITHUB_ACTOR}"
+            NAMESPACE="${GITHUB_REPOSITORY_OWNER}"
             echo "Pushing to the repository owner's namespace (GITHUB_TOKEN)."
           fi
-          OWNER=$(echo "$LOGIN" | tr '[:upper:]' '[:lower:]')
+          OWNER=$(echo "$NAMESPACE" | tr '[:upper:]' '[:lower:]')
           echo "user=$LOGIN" >> "$GITHUB_OUTPUT"
           echo "owner=$OWNER" >> "$GITHUB_OUTPUT"
           echo "name=ghcr.io/${OWNER}/${BLOXITY_GAME_ID}-server" >> "$GITHUB_OUTPUT"

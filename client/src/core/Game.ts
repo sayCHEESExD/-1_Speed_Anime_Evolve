@@ -635,6 +635,7 @@ export class Game {
   /** A claim the SERVER granted: the fanfare; the server then sends us home. */
   private onStageAwarded(message: StageAwardedMessage): void {
     this.audio.play('win');
+    this.hud.trophy(message.wins);
     this.hud.toast(`Stage ${message.stage} complete! +${formatWins(message.wins)} Win${message.wins === 1 ? '' : 's'}!`, 'gold');
     if (message.stage < STAGE_COUNT && this.local && message.stage >= this.local.bestStage) {
       this.hud.toast(`Stage ${message.stage + 1} unlocked in Teleport!`, 'good');

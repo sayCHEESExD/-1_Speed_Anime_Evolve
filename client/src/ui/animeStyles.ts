@@ -138,6 +138,77 @@ body.aoe-touch-mode .ae-tile__key { display: none; }
 }
 .ae-levelup small { display: block; text-align: center; font-size: 0.45em; color: #7dff6a; }
 @keyframes ae-levelup { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 30% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* The trophy celebration on a claim: an overlay anchored at one point, everything centred on it. */
+.ae-trophy { position: absolute; left: 50%; top: 40%; width: 0; height: 0; pointer-events: none; z-index: 30; --cup: max(150px, calc(270 * var(--u))); }
+.ae-trophy__rays {
+  position: absolute; left: 0; top: 0; width: calc(var(--cup) * 3.6); height: calc(var(--cup) * 3.6); border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 225, 74, 0.6) 0deg 9deg, rgba(255, 225, 74, 0) 9deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 68%); mask: radial-gradient(circle, #000 18%, transparent 68%);
+  animation: ae-trophy-rays 1.9s ease-out both;
+}
+@keyframes ae-trophy-rays {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(0deg) scale(0.3); }
+  15% { opacity: 1; transform: translate(-50%, -50%) rotate(18deg) scale(1); }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(80deg) scale(1.08); }
+}
+.ae-trophy__glow {
+  position: absolute; left: 0; top: 0; width: calc(var(--cup) * 1.9); height: calc(var(--cup) * 1.9); border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 214, 58, 0.7) 32%, rgba(255, 170, 30, 0) 70%);
+  animation: ae-trophy-glow 1.5s ease-out both;
+}
+@keyframes ae-trophy-glow {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  60% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.95); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.ae-trophy__fly { position: absolute; left: 0; top: 0; animation: ae-trophy-fly 0.5s cubic-bezier(0.55, -0.25, 0.8, 0.45) 1.15s both; }
+@keyframes ae-trophy-fly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0.18); opacity: 0.35; } }
+.ae-trophy__cup {
+  width: var(--cup); height: var(--cup); margin: calc(var(--cup) / -2) 0 0 calc(var(--cup) / -2);
+  filter: drop-shadow(0 0 calc(var(--cup) * 0.12) rgba(255, 210, 58, 0.95)) drop-shadow(0 calc(var(--cup) * 0.03) 0 rgba(20, 14, 40, 0.5));
+  animation: ae-trophy-pop 0.65s cubic-bezier(0.2, 1.7, 0.45, 1) both, ae-trophy-wobble 0.5s ease-in-out 0.65s 1;
+}
+.ae-trophy__cup img, .ae-trophy__mini img { width: 100%; height: 100%; display: block; }
+@keyframes ae-trophy-pop { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.2) rotate(8deg); } 100% { transform: scale(1) rotate(0deg); } }
+@keyframes ae-trophy-wobble { 25% { transform: rotate(-9deg) scale(1.04); } 50% { transform: rotate(7deg); } 75% { transform: rotate(-4deg); } 100% { transform: rotate(0deg); } }
+.ae-trophy__text {
+  position: absolute; left: 0; top: calc(var(--cup) * 0.62); white-space: nowrap; color: #ffe14a;
+  font-size: max(28px, calc(96 * var(--u))); animation: ae-trophy-text 1.6s ease-out both;
+}
+@keyframes ae-trophy-text {
+  0% { opacity: 0; transform: translate(-50%, 30%) scale(0.4); }
+  20% { opacity: 1; transform: translate(-50%, 0) scale(1.18); }
+  32% { transform: translate(-50%, 0) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -40%) scale(1); }
+}
+.ae-trophy__bit {
+  position: absolute; left: 0; top: 0; width: max(12px, calc(20 * var(--u))); height: max(18px, calc(32 * var(--u))); border-radius: 3px;
+  box-shadow: 0 0 0 max(1px, calc(2 * var(--u))) rgba(20, 14, 40, 0.35); animation: ae-trophy-bit 1.25s cubic-bezier(0.15, 0.75, 0.4, 1) both;
+}
+@keyframes ae-trophy-bit {
+  0% { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(0.4); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(var(--x) - 50%), calc(var(--y) - 50%)) rotate(var(--s)) scale(1); }
+}
+.ae-trophy__mini {
+  position: absolute; left: 0; top: 0; width: calc(var(--cup) * 0.3); height: calc(var(--cup) * 0.3);
+  filter: drop-shadow(0 0 calc(var(--cup) * 0.05) rgba(255, 210, 58, 0.9)); animation: ae-trophy-mini 0.8s cubic-bezier(0.5, 0, 0.75, 0.4) both;
+}
+@keyframes ae-trophy-mini {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  25% { opacity: 1; transform: translate(calc(var(--mx) - 50%), calc(var(--my) - 50%)) scale(1); }
+  100% { opacity: 1; transform: translate(calc(var(--dx) - 50%), calc(var(--dy) - 50%)) scale(0.55); }
+}
+.ae-stat { transform-origin: left center; }
+.ae-stat.is-bump { animation: ae-stat-bump 0.32s ease-out; }
+@keyframes ae-stat-bump { 0% { transform: scale(1); } 40% { transform: scale(1.22); filter: brightness(1.35); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .ae-trophy__rays, .ae-trophy__bit, .ae-trophy__mini { display: none; }
+  .ae-trophy__cup { animation: ae-trophy-pop 0.3s ease-out both; }
+}
 .ae-hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: max(96px, calc(200 * var(--u))); font-size: max(13px, calc(30 * var(--u))); white-space: nowrap; opacity: 0.95; }
 .ae-flash { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 90, 0, 0) 40%, rgba(255, 60, 0, 0.55)); animation: ae-flash 0.9s ease forwards; }
 @keyframes ae-flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
