@@ -3,7 +3,7 @@ import { logger } from '../util/logger.js';
 const SCOPE = 'audio';
 
 /** Master volumes per category. Music sits well under the gameplay sounds. */
-const MUSIC_GAIN = 0.33;
+const MUSIC_GAIN = 0.5;
 const SFX_GAIN = 0.34;
 
 /**
@@ -442,7 +442,7 @@ export class AudioManager {
      * The arithmetic is the reason rather than taste. The walk recording and
      * the music track are within half a decibel of each other (-12.3 dBFS RMS
      * against -11.9), so whatever each is multiplied by IS the balance between
-     * them - and the music reaches the master at MUSIC_GAIN, 0.33. A walk that
+     * them - and the music reaches the master at MUSIC_GAIN, 0.5. A walk that
      * only matches that figure does not read as loud: the music is broadband
      * and the walk is mostly low end, so at equal level the track MASKS it.
      * It has to sit clearly ABOVE the music to be heard as what it is.
