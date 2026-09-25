@@ -1,9 +1,11 @@
 /**
- * THE TWELVE EVOLUTIONS.
+ * THE TWELVE EVOLUTIONS, and the avatar they evolve FROM.
  *
- * A player starts as Luffy and EVOLVES one step at a time: evolving to the
- * next character spends its Wins price, unlocks it for good and wears it.
- * Any owned character can be worn again from the Backpack.
+ * A player starts as THEIR OWN BLOXITY AVATAR (slot 0, `AVATAR_CHARACTER`) and
+ * EVOLVES one step at a time: evolving to the next character spends its Wins
+ * price, unlocks it for good and wears it. The first evolution, Luffy, costs
+ * nothing, so a new player can evolve straight away. Any owned character - the
+ * avatar included - can be worn again from the Backpack.
  *
  * `multiplier` is a real factor of the Speed formula (`speed.ts`): it
  * multiplies every point of Speed XP the player earns, running or on a
@@ -14,7 +16,7 @@
  * keyed by slot.
  */
 export interface CharacterDef {
-  /** 1-based slot: evolution order, bit (slot - 1) of the owned mask. */
+  /** 1-based slot for the evolutions (bit (slot - 1) of the owned mask); 0 is the avatar. */
   readonly slot: number;
   readonly name: string;
   readonly series: string;
@@ -45,17 +47,27 @@ export const CHARACTER_COUNT = CHARACTERS.length;
 /** Every character bit, for sanitising a stored mask. */
 export const ALL_CHARACTER_BITS = (1 << CHARACTER_COUNT) - 1;
 
-/** Luffy is always owned. */
-export const STARTER_CHARACTER_BITS = 1;
+/** Slot 0: the player's own Bloxity avatar - where every player starts. */
+export const AVATAR_SLOT = 0;
 
-export const characterBySlot = (slot: number): CharacterDef | undefined => CHARACTERS[Math.floor(slot) - 1];
+/**
+ * THE STARTING CHARACTER: the player's own Bloxity avatar. Always owned (it
+ * has no bit in the mask - there is nothing to unlock), x1 like Luffy, and it
+ * evolves into Luffy for free. Not one of the twelve `CHARACTERS`, which stay
+ * exactly the evolution chain.
+ */
+export const AVATAR_CHARACTER: CharacterDef = { slot: AVATAR_SLOT, name: 'Your Avatar', series: 'Bloxity', multiplier: 1.0, cost: 0, color: '#7fd8ff' };
 
+export const characterBySlot = (slot: number): CharacterDef | undefined =>
+  Math.floor(slot) === AVATAR_SLOT ? AVATAR_CHARACTER : CHARACTERS[Math.floor(slot) - 1];
+
+/** The avatar is always owned; an evolution is owned once its bit is set. */
 export const ownsCharacter = (owned: number, slot: number): boolean =>
-  slot >= 1 && slot <= CHARACTER_COUNT && ((owned | STARTER_CHARACTER_BITS) & (1 << (slot - 1))) !== 0;
+  slot === AVATAR_SLOT || (slot >= 1 && slot <= CHARACTER_COUNT && (owned & (1 << (slot - 1))) !== 0);
 
-/** The highest slot owned: evolution always moves on from here. */
+/** The highest slot owned (0: still the avatar): evolution always moves on from here. */
 export const highestOwnedSlot = (owned: number): number => {
-  let best = 1;
+  let best = AVATAR_SLOT;
   for (let slot = 1; slot <= CHARACTER_COUNT; slot += 1) if (ownsCharacter(owned, slot)) best = slot;
   return best;
 };
@@ -63,9 +75,9 @@ export const highestOwnedSlot = (owned: number): number => {
 /** The next evolution, or undefined at the last. */
 export const nextEvolution = (owned: number): CharacterDef | undefined => characterBySlot(highestOwnedSlot(owned) + 1);
 
-/** The worn character's multiplier; an unowned or unknown slot falls back to Luffy. */
+/** The worn character's multiplier; an unowned or unknown slot falls back to the avatar's. */
 export const characterMultiplierOf = (slot: number, owned: number): number => {
   const def = characterBySlot(slot);
-  if (!def || !ownsCharacter(owned, slot)) return CHARACTERS[0]!.multiplier;
+  if (!def || !ownsCharacter(owned, slot)) return AVATAR_CHARACTER.multiplier;
   return def.multiplier;
 };

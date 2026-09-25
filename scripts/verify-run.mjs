@@ -132,7 +132,10 @@ const stamp = Date.now().toString(36);
 const playerId = `run-${stamp}`;
 console.log(`verify-run (${ENDPOINT})`);
 let room = await join(playerId);
-check(me(room).characterSlot === 1 && me(room).level === 1, 'a new runner starts as Luffy at Level 1');
+check(me(room).characterSlot === 0 && me(room).ownedCharacters === 0 && me(room).level === 1, 'a new runner starts as their Bloxity avatar at Level 1');
+room.send(S.MessageType.Evolve, {});
+await waitFor(() => me(room).characterSlot === 1, 'the free evolution into Luffy');
+check(me(room).ownedCharacters === 1 && me(room).wins === 0 && Math.abs(me(room).multiplier - 1) < 1e-6, 'the avatar evolves into Luffy for 0 Wins (x1)');
 const fresh = await measureRun(room);
 check(Math.abs(fresh.speed - 16) < 0.01, `Level 1 runs at 16 (server moveSpeed ${fresh.speed.toFixed(2)}; ran ${fresh.distance.toFixed(1)} in 1.2 s)`);
 

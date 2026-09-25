@@ -1,4 +1,5 @@
 import type { MapSchema } from '@colyseus/schema';
+import type { AvatarAppearance, AvatarProportions } from '@anime/shared';
 
 /**
  * Client-side TYPE mirror of the server's Colyseus schema.
@@ -35,6 +36,8 @@ export interface NetPlayerState {
 
   displayName: string;
   avatarUrl: string;
+  /** The Bloxity avatar they are drawn as, while they wear slot 0. */
+  avatar?: AvatarAppearance & AvatarProportions;
 
   level: number;
   xp: number;

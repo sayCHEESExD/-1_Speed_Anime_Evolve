@@ -78,6 +78,13 @@ Do NOT use python from the Bash tool on this machine. Use node/sed/perl. Never c
 - **Name plates**: every runner (remote AND your own, `Game.localPlate` at 0.6 size so it never covers the course)
   shows its portal portrait over its name (`player/NamePlate.ts`); no portrait -> the portal default, and an
   initial badge until an image loads.
+- **The Bloxity avatar is the starting character** (`AVATAR_SLOT` 0, `AVATAR_CHARACTER`, x1, always owned, no
+  ownership bit; bits are slot-1 for the 12 evolutions). New profiles: `characterSlot 0, ownedCharacters 0`.
+  Luffy (slot 1) costs 0 Wins - the free first evolution; the rest of the chain is unchanged. The look is sent
+  in the join options and on `avatarChanged` (`SetAvatar`), sanitised into `PlayerState.avatar` (`AvatarState`)
+  and replicated; `bloxity/AvatarDresser` dresses the avatar body of `PlayerCharacter` (Bloxity `player.glb`,
+  same 12-bone rig; bundled `player.fbx` until it loads or if it fails). `PlayerCharacter` holds the avatar
+  body and the evolution body, one shown per slot. The Backpack's first row re-equips the avatar.
 - **Islands are WIDE** (platforms ~28-40 across, pillars 12-16, bridges 10-13, start 44, goal 52, wall-run
   channel 22); the course LENGTH is unchanged. Auto-sprint after `sprintDelay` 0.7 s (ramp 0.35 s).
 - **The course is generated** (`shared/src/config/map.ts`, deterministic): each stage = start platform

@@ -1,4 +1,6 @@
 import {
+  AVATAR_CHARACTER,
+  AVATAR_SLOT,
   CHARACTERS,
   CHARMS,
   GIFTS,
@@ -43,6 +45,8 @@ export interface ViewState {
   xpNeeded: number;
   characterSlot: number;
   ownedCharacters: number;
+  /** The player's portal portrait: the picture of their Bloxity avatar. */
+  avatarUrl: string;
   trailId: number;
   ownedTrails: number;
   charms: readonly number[];
@@ -191,7 +195,7 @@ export class BackpackWindow extends Window {
   }
 
   protected override signatureOf(s: ViewState): string {
-    return [this.tab, s.wins, s.characterSlot, s.ownedCharacters, s.trailId, s.ownedTrails, s.charms.join(','), s.equippedCharms.join(',')].join('|');
+    return [this.tab, s.wins, s.characterSlot, s.ownedCharacters, s.avatarUrl, s.trailId, s.ownedTrails, s.charms.join(','), s.equippedCharms.join(',')].join('|');
   }
 
   protected override render(): void {
@@ -235,6 +239,12 @@ export class BackpackWindow extends Window {
     this.section('anime', 'Anime', ICON.evolve);
     const list = el('div', 'ae-list');
     const next = nextEvolution(s.ownedCharacters);
+    const avatarArt = `<img src="${s.avatarUrl}" alt="" referrerpolicy="no-referrer" />`;
+    const avatarAction =
+      s.characterSlot === AVATAR_SLOT
+        ? button('ae-btn--green is-state', 'EQUIPPED', () => undefined, true)
+        : button('ae-btn--blue', 'EQUIP', () => this.actions.equipCharacter(AVATAR_SLOT));
+    list.append(this.row(avatarArt, AVATAR_CHARACTER.name, `${formatBoost(AVATAR_CHARACTER.multiplier)} Boost`, AVATAR_CHARACTER.series, avatarAction, false));
     for (const def of CHARACTERS) {
       const owned = ownsCharacter(s.ownedCharacters, def.slot);
       const url = this.portraits.character(def.slot);
@@ -359,12 +369,13 @@ export class EvolveWindow extends Window {
   }
 
   protected override signatureOf(s: ViewState): string {
-    return [s.wins, s.ownedCharacters].join('|');
+    return [s.wins, s.ownedCharacters, s.avatarUrl].join('|');
   }
 
   private portrait(slot: number): HTMLElement {
     const def = characterBySlot(slot)!;
-    const url = this.portraits.character(slot);
+    // The avatar's picture is the player's own portal portrait; an evolution is rendered from its model.
+    const url = slot === AVATAR_SLOT ? (this.state?.avatarUrl ?? '') : this.portraits.character(slot);
     const node = el('div', 'ae-portrait ae-studs', url ? `<img src="${url}" alt="" />` : '');
     const name = el('div', 'ae-portrait__name ae-text');
     name.textContent = def.name.split(' ')[0] ?? def.name;

@@ -1,10 +1,10 @@
 import {
   ALL_CHARACTER_BITS,
   ALL_TRAIL_BITS,
+  AVATAR_SLOT,
   CHARACTER_COUNT,
   CHARM_COUNT,
   MAX_EQUIPPED_CHARMS,
-  STARTER_CHARACTER_BITS,
   STARTER_TRAIL_BITS,
   TRAIL_COUNT,
 } from '@anime/shared';
@@ -106,10 +106,11 @@ class ProfileStore {
     player.wins = Math.floor(p.wins);
     player.lifetimeWins = Math.max(Math.floor(p.lifetimeWins), player.wins);
     player.rebirths = Math.floor(p.rebirths);
-    player.ownedCharacters = (Math.floor(p.ownedCharacters) & ALL_CHARACTER_BITS) | STARTER_CHARACTER_BITS;
+    // No evolution is owned until it is evolved into; the avatar (slot 0) needs no bit.
+    player.ownedCharacters = Math.floor(p.ownedCharacters) & ALL_CHARACTER_BITS;
     const slot = Math.floor(p.characterSlot);
     player.characterSlot =
-      slot >= 1 && slot <= CHARACTER_COUNT && (player.ownedCharacters & (1 << (slot - 1))) !== 0 ? slot : 1;
+      slot >= 1 && slot <= CHARACTER_COUNT && (player.ownedCharacters & (1 << (slot - 1))) !== 0 ? slot : AVATAR_SLOT;
     player.ownedTrails = (Math.floor(p.ownedTrails) & ALL_TRAIL_BITS) | STARTER_TRAIL_BITS;
     const trail = Math.floor(p.trailId);
     player.trailId = trail >= 0 && trail < TRAIL_COUNT && (player.ownedTrails & (1 << trail)) !== 0 ? trail : 0;

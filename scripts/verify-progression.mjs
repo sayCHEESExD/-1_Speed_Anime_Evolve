@@ -38,6 +38,10 @@ CHARACTERS.forEach(([name, series, mult, cost], i) => {
   check(c.name === name && c.series === series && c.multiplier === mult && c.cost === cost, `${i + 1}. ${name} - ${series} - ${mult.toFixed(2)}x - ${cost} Wins`);
 });
 check(S.nextEvolution(1)?.name === 'Deku' && S.nextEvolution((1 << 12) - 1) === undefined, 'evolution goes in order and ends at Ichigo');
+// The starting state: the player's own Bloxity avatar (slot 0), and Luffy is its FREE first evolution.
+check(S.AVATAR_SLOT === 0 && S.characterBySlot(0)?.name === 'Your Avatar' && S.ownsCharacter(0, 0), 'a new player IS their Bloxity avatar (slot 0, always owned)');
+check(S.characterMultiplierOf(0, 0) === 1 && !S.ownsCharacter(0, 1), 'the avatar runs at x1 and owns no evolution yet');
+check(S.nextEvolution(0)?.name === 'Luffy' && S.nextEvolution(0)?.cost === 0, 'the first evolution from the avatar is Luffy, for 0 Wins');
 
 // ------------------------------------------------------------------- rebirth
 const rebirthOk = [0, 1, 2, 3, 10, 100].every((r) => near(S.rebirthPower(r), 1 + 0.5 * r) && S.levelCapFor(r) === 15 + 15 * r);
@@ -121,6 +125,7 @@ const collection = new CollectionService();
 const player = new PlayerState();
 player.sessionId = 'verify';
 progression.initialise(player);
+check(player.characterSlot === 0 && player.ownedCharacters === 0, 'a new player state starts as the avatar, no evolution owned');
 check(player.level === 1 && player.levelCap === 15 && player.xpNeeded === 37, 'a new player: Level 1 of 15, 37 XP to Level 2');
 
 // Running pays per stride of server-simulated distance.
@@ -144,9 +149,13 @@ check(player.moveSpeed > 16 && near(player.moveSpeed, S.runSpeedFor(1, 1.5)), `a
 
 // Every factor reaches the Speed formula.
 player.wins = 2_000_000;
+collection.evolve(player, progression); // Luffy - free
+check(player.characterSlot === 1 && player.ownedCharacters === 1 && player.wins === 2_000_000, 'the avatar evolves into Luffy for free');
 collection.evolve(player, progression); // Deku
 collection.evolve(player, progression); // Yuji
-check(player.characterSlot === 3 && player.wins === 2_000_000 - 30, 'evolving spends the Wins, in order (Deku, then Yuji)');
+check(player.characterSlot === 3 && player.wins === 2_000_000 - 30, 'evolving spends the Wins, in order (Luffy free, Deku, then Yuji)');
+check(collection.wearCharacter(player, 0, progression).ok && player.characterSlot === 0 && near(player.multiplier, 1.5), 'the avatar can be worn again at any time (x1 character)');
+collection.wearCharacter(player, 3, progression);
 check(near(player.multiplier, 1.5 * 1.5), 'Yuji x1.5 multiplies with Power x1.5');
 const yujiSpeed = player.moveSpeed;
 collection.trail(player, 'buy', 10, progression);

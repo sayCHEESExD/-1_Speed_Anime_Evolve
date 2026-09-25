@@ -68,6 +68,8 @@ export const MessageType = {
   SetIdentity: 'setIdentity',
   /** Client -> server: the portal's game TOKEN, or null when signed out. */
   SetAuth: 'setAuth',
+  /** Client -> server: the player's Bloxity avatar look (cosmetic ids + proportions). */
+  SetAvatar: 'setAvatar',
   /** Server -> client: whose progress this session is now playing on. */
   AuthState: 'authState',
 } as const;

@@ -1,5 +1,6 @@
 import { ArraySchema, Schema, type } from '@colyseus/schema';
-import { CHARM_COUNT, JUMP_VELOCITY, SPAWN, runSpeedForLevel } from '@anime/shared';
+import { AVATAR_SLOT, CHARM_COUNT, JUMP_VELOCITY, SPAWN, runSpeedForLevel } from '@anime/shared';
+import { AvatarState } from './AvatarState.js';
 
 const zeros = (length: number): ArraySchema<number> => {
   const list = new ArraySchema<number>();
@@ -47,6 +48,8 @@ export class PlayerState extends Schema {
 
   @type('string') displayName = '';
   @type('string') avatarUrl = '';
+  /** The Bloxity avatar this player is drawn as (cosmetic; sanitised on arrival, never persisted). */
+  @type(AvatarState) avatar = new AvatarState();
 
   // ---- progression: every figure is the server's own
   @type('uint16') level = 1;
@@ -71,8 +74,10 @@ export class PlayerState extends Schema {
   @type('float32') moveSpeed: number = runSpeedForLevel(1);
   @type('float32') jumpVelocity = JUMP_VELOCITY;
 
-  @type('uint8') characterSlot = 1;
-  @type('uint16') ownedCharacters = 1;
+  /** 0 = the player's own Bloxity avatar, where everyone starts; 1-12 = an evolution. */
+  @type('uint8') characterSlot = AVATAR_SLOT;
+  /** Evolutions owned, bit (slot - 1). None until the first evolution. */
+  @type('uint16') ownedCharacters = 0;
   @type('uint8') trailId = 0;
   @type('uint16') ownedTrails = 1;
   /** Charms held, counted by id. */

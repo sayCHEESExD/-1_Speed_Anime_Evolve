@@ -10,6 +10,7 @@ import {
   type NoticeMessage,
   type RespawnMessage,
   type SetAuthMessage,
+  type SetAvatarMessage,
   type SetIdentityMessage,
   type StageAwardedMessage,
   type TeleportMessage,
@@ -79,6 +80,8 @@ export class NetworkClient {
   /** The last token the server was told about, so an unchanged one is not resent. */
   private sentToken: string | null | undefined = undefined;
   private identityOf: (() => SetIdentityMessage) | null = null;
+  /** The player's Bloxity look, sent with the join so others draw them right at once. */
+  private look: (() => SetAvatarMessage | null) | null = null;
 
   constructor(handlers: NetworkHandlers = {}) {
     this.handlers = handlers;
@@ -86,6 +89,15 @@ export class NetworkClient {
 
   sendIdentity(message: SetIdentityMessage): void {
     this.room?.send(MessageType.SetIdentity, message);
+  }
+
+  setLookProvider(provider: () => SetAvatarMessage | null): void {
+    this.look = provider;
+  }
+
+  /** The player's Bloxity avatar changed: the server replicates it to everyone. */
+  sendAvatar(message: SetAvatarMessage): void {
+    this.room?.send(MessageType.SetAvatar, message);
   }
 
   /**
@@ -161,6 +173,7 @@ export class NetworkClient {
           playerId,
           token,
           identity: this.identityOf?.() ?? undefined,
+          avatar: this.look?.() ?? undefined,
         });
         joinedWith = token;
         break;

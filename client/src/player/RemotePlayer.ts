@@ -1,5 +1,7 @@
 import { MODE_NORMAL, TREADMILLS } from '@anime/shared';
 import { createAnimationInput, type AnimationInput } from '../animation/AnimationInput.js';
+import { AvatarDresser } from '../bloxity/AvatarDresser.js';
+import { lookFromState } from '../bloxity/avatarLook.js';
 import type { NetPlayerState } from '../net/netTypes.js';
 import { sprintWeight, wallSideOf } from './LocalPlayer.js';
 import { NamePlate } from './NamePlate.js';
@@ -17,7 +19,7 @@ const shortestAngle = (from: number, to: number): number => {
 
 /**
  * Another player's runner, rendered from replicated state ONLY: their
- * evolution, trail, sprint wind, wall-runs, climbs, flips and lava burns all
+ * Bloxity avatar (dressed from the look they replicate) or their evolution, trail, sprint wind, wall-runs, climbs, flips and lava burns all
  * come from the same fields the server writes for everyone. The transform is
  * extrapolated along the replicated velocity and smoothed, so a fast runner
  * does not stutter between patches.
@@ -26,6 +28,9 @@ export class RemotePlayer {
   readonly character: PlayerCharacter;
 
   private readonly plate = new NamePlate();
+  private readonly dresser: AvatarDresser;
+  /** The look last dressed, so an unchanged patch does no work. */
+  private lastLook = '';
   private targetX = 0;
   private targetY = 0;
   private targetZ = 0;
@@ -48,7 +53,8 @@ export class RemotePlayer {
   }
 
   constructor(state: NetPlayerState) {
-    this.character = new PlayerCharacter(state.characterSlot || 1);
+    this.character = new PlayerCharacter(state.characterSlot);
+    this.dresser = new AvatarDresser(this.character);
     this.character.root.add(this.plate.sprite);
     this.apply(state);
     this.character.setPosition(this.targetX, this.targetY, this.targetZ);
@@ -68,6 +74,7 @@ export class RemotePlayer {
     this.sinceUpdate = 0;
     if (jump > SNAP_DISTANCE) this.character.resetTrail();
 
+    this.dressFrom(state);
     this.character.setCharacter(state.characterSlot);
     this.character.setTrail(state.trailId);
     this.character.setDead(state.dead);
@@ -85,6 +92,16 @@ export class RemotePlayer {
     this.input.treadmillSpeed = state.moveSpeed * (TREADMILLS[state.treadmill]?.multiplier ?? 1);
     if (this.lastFlipCount >= 0 && state.flipCount !== this.lastFlipCount) this.flipTime = 0;
     this.lastFlipCount = state.flipCount;
+  }
+
+  /** Put their replicated Bloxity look on their avatar body (worn whenever they are at slot 0). */
+  private dressFrom(state: NetPlayerState): void {
+    if (!state.avatar) return;
+    const look = lookFromState(state.avatar);
+    const key = JSON.stringify(look);
+    if (key === this.lastLook) return;
+    this.lastLook = key;
+    this.dresser.setLook(look.appearance, look.proportions);
   }
 
   update(delta: number): void {
@@ -124,6 +141,7 @@ export class RemotePlayer {
 
   dispose(): void {
     this.plate.dispose();
+    this.dresser.dispose();
     this.character.dispose();
   }
 }

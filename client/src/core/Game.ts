@@ -17,12 +17,16 @@ import {
   treadmillAt,
   type NoticeMessage,
   type RespawnMessage,
+  type SetAvatarMessage,
   type StageAwardedMessage,
 } from '@anime/shared';
 import { Vector3 } from 'three';
 import { AudioManager } from '../audio/AudioManager.js';
 import { PlayerAudio } from '../audio/PlayerAudio.js';
 import { Bloxity } from '../bloxity/Bloxity.js';
+import { AvatarDresser } from '../bloxity/AvatarDresser.js';
+import { DEFAULT_PORTRAIT } from '../bloxity/Portraits.js';
+import { lookFromLegion } from '../bloxity/avatarLook.js';
 import { identityFromLegion } from '../bloxity/identity.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { clientConfig } from '../config/clientConfig.js';
@@ -117,6 +121,10 @@ export class Game {
   private fpsFrames = 0;
 
   private localPlayer: LocalPlayer | null = null;
+  /** Puts the player's Bloxity avatar on their own character (worn at slot 0). */
+  private dresser: AvatarDresser | null = null;
+  /** A look that arrived before the world was built, worn as soon as it is. */
+  private pendingLook: SetAvatarMessage | null = null;
   /** Your own name and portrait over your own runner, as everyone else sees them. */
   private readonly localPlate = new NamePlate(0.6);
   private localSessionId: string | null = null;
@@ -174,8 +182,13 @@ export class Game {
       setCameraSensitivity: (scale) => this.input.look.setSensitivityScale(scale),
       respawn: () => this.network.requestRespawn(),
       pointerLockChanged: (locked) => this.input.look.setCursorFree(!locked),
-      // Every player runs as their anime evolution, never their portal avatar.
-      avatarChanged: () => undefined,
+      // The player starts as THEIR BLOXITY AVATAR: dress it, and tell the room.
+      avatarChanged: (equipped, proportions) => {
+        const look = lookFromLegion(equipped, proportions);
+        this.network.sendAvatar(look);
+        if (this.dresser) this.dresser.setLook(look.appearance, look.proportions);
+        else this.pendingLook = look;
+      },
     });
 
     this.fpsReadout = document.createElement('div');
@@ -213,6 +226,7 @@ export class Game {
 
     this.network.setTokenProvider(() => this.bloxity.getToken());
     this.network.setDisplayProvider(() => identityFromLegion(this.bloxity.getUser(), this.bloxity.getGuest()));
+    this.network.setLookProvider(() => lookFromLegion(this.bloxity.getEquipped(), this.bloxity.getProportions()));
     this.bloxity.onUserChanged((user) => {
       this.network.sendAuth(this.bloxity.getToken());
       this.network.sendIdentity(identityFromLegion(user, this.bloxity.getGuest()));
@@ -293,8 +307,13 @@ export class Game {
     scene.add(this.localPlayer.character.root);
     scene.add(this.localPlayer.character.worldRoot);
     this.localPlayer.character.root.add(this.localPlate.sprite);
+    // Dressed at once: the portal's look if it is known, else Bloxity's default avatar.
+    this.dresser = new AvatarDresser(this.localPlayer.character);
+    const look = this.pendingLook ?? lookFromLegion(this.bloxity.getEquipped(), this.bloxity.getProportions());
+    this.pendingLook = null;
+    this.dresser.setLook(look.appearance, look.proportions);
     this.camera.snapTo(this.localPlayer.position);
-    this.hub.setNextEvolution(2, 0);
+    this.hub.setNextEvolution(1, 0);
     logger.info(SCOPE, 'world ready');
     return report;
   }
@@ -517,6 +536,7 @@ export class Game {
       xpNeeded: state.xpNeeded,
       characterSlot: state.characterSlot,
       ownedCharacters: state.ownedCharacters,
+      avatarUrl: state.avatarUrl || DEFAULT_PORTRAIT,
       trailId: state.trailId,
       ownedTrails: state.ownedTrails,
       charms,
@@ -661,6 +681,7 @@ export class Game {
     this.fpsReadout.remove();
     this.audio.dispose();
     this.remotePlayers.dispose();
+    this.dresser?.dispose();
     this.localPlate.dispose();
     this.hub?.dispose();
     this.course.dispose();

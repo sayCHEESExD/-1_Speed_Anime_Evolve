@@ -15,7 +15,9 @@ import {
   isValidGuestId,
   levelCapFor,
   rebirthPower,
+  sanitizeAppearance,
   sanitizeIdentity,
+  sanitizeProportions,
   shopSecondsLeft,
   shopWindowAt,
   stageEntry,
@@ -30,6 +32,7 @@ import {
   type RespawnMessage,
   type RespawnReason,
   type SetAuthMessage,
+  type SetAvatarMessage,
   type SetIdentityMessage,
   type StageAwardedMessage,
   type TeleportMessage,
@@ -83,6 +86,8 @@ interface JoinOptions {
   /** The portal's game token, or nothing. Verified with Bloxity, never trusted. */
   token?: string | null;
   identity?: SetIdentityMessage;
+  /** The Bloxity avatar look, so the player is drawn right from the first frame. */
+  avatar?: SetAvatarMessage;
 }
 
 /** What `onAuth` resolves and hands to `onJoin`. */
@@ -166,6 +171,7 @@ export class GameRoom extends Room<GameState> {
       if (!this.burning.has(client.sessionId)) this.placeAt(client, SPAWN, 'manual');
     });
     this.onMessage(MessageType.SetIdentity, (client, message: SetIdentityMessage) => this.onSetIdentity(client, message));
+    this.onMessage(MessageType.SetAvatar, (client, message: SetAvatarMessage) => this.onSetAvatar(client, message));
     this.onMessage(MessageType.SetAuth, (client, message: SetAuthMessage) => {
       void this.switchAuth(client, message, false);
     });
@@ -224,6 +230,7 @@ export class GameRoom extends Room<GameState> {
     this.state.players.set(client.sessionId, player);
     this.initialiseServices(client.sessionId, player);
 
+    if (options.avatar) this.writeAvatar(player, options.avatar);
     if (options.identity) {
       const identity = sanitizeIdentity(options.identity);
       if (identity.displayName) {
@@ -569,6 +576,16 @@ export class GameRoom extends Room<GameState> {
       return;
     }
     if (to in TELEPORTS) this.placeAt(client, TELEPORTS[to as keyof typeof TELEPORTS], 'teleport');
+  }
+
+  /** The player's Bloxity look. Cosmetic: sanitised and drawn, never read by the simulation. */
+  private onSetAvatar(client: Client, message: SetAvatarMessage): void {
+    const player = this.state.players.get(client.sessionId);
+    if (player) this.writeAvatar(player, message);
+  }
+
+  private writeAvatar(player: PlayerState, message: SetAvatarMessage): void {
+    player.avatar.apply(sanitizeAppearance(message?.appearance), sanitizeProportions(message?.proportions));
   }
 
   private onSetIdentity(client: Client, message: SetIdentityMessage): void {

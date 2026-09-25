@@ -1,3 +1,5 @@
+import type { AvatarAppearance, AvatarProportions } from './avatar.js';
+
 /**
  * Client -> server input (MessageType.Move).
  *
@@ -75,6 +77,12 @@ export interface NoticeMessage {
 export interface SetIdentityMessage {
   displayName: string;
   avatarUrl: string;
+}
+
+/** Client -> server: the Bloxity avatar a player is drawn as (sanitised on arrival). */
+export interface SetAvatarMessage {
+  appearance: AvatarAppearance;
+  proportions: AvatarProportions;
 }
 
 /** Client -> server: the portal's game TOKEN, or null when signed out. */

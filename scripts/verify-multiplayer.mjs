@@ -76,6 +76,24 @@ check(seen().flipCount === flipsBefore + 1, 'the second jump was a double jump (
 // Physical speed is the server's: level x multipliers, nothing a client can set.
 check(Math.abs(self().moveSpeed - S.runSpeedFor(self().level, self().multiplier)) < 1e-3, `the server runs the runner at its level's speed (${self().moveSpeed.toFixed(2)})`);
 
+// A player's Bloxity look reaches everyone, sanitised: bad ids dropped, proportions clamped.
+runner.send(S.MessageType.SetAvatar, {
+  appearance: { hatId: 'hat42', skinId: '-1', headId: '<script>', torsoId: 'x'.repeat(80) },
+  proportions: { height: 99, headScale: 1.2 },
+});
+await sleep(400);
+{
+  const look = seen().avatar;
+  check(!!look && look.hatId === 'hat42' && look.skinId === '' && look.headId === '' && look.torsoId === '', 'the Bloxity look is replicated, with junk ids dropped');
+  check(!!look && look.height === 4 && Math.abs(look.headScale - 1.2) < 1e-6, 'and its proportions clamped (height 99 -> 4)');
+}
+
+// A new runner is their Bloxity avatar; Luffy, the first evolution, is free.
+check(self().characterSlot === 0 && self().ownedCharacters === 0, 'a new runner starts as their Bloxity avatar (slot 0)');
+runner.send(S.MessageType.Evolve, {});
+await sleep(300);
+check(self().characterSlot === 1 && self().ownedCharacters === 1 && self().wins === 0, 'evolving from the avatar into Luffy costs nothing');
+
 // Refusals.
 runner.send(S.MessageType.Evolve, {});
 runner.send(S.MessageType.Rebirth, {});
@@ -86,7 +104,7 @@ runner.send(S.MessageType.ClaimGift, { index: 7 });
 runner.send(S.MessageType.Teleport, { to: 'stage9' });
 await sleep(500);
 const p = self();
-check(p.ownedCharacters === 1 && p.characterSlot === 1, 'evolving without Wins is refused');
+check(p.ownedCharacters === 1 && p.characterSlot === 1, 'evolving into Deku without its 5 Wins is refused');
 check(p.rebirths === 0, `a rebirth below the Level ${S.levelCapFor(0)} cap is refused`);
 check(p.ownedTrails === 1 && p.trailId === 0, 'a trail without the Wins is refused');
 check(Array.from(p.charms).every((n) => n === 0) && p.equippedCharms.length === 0, 'a charm away from the shop, or not owned, is refused');

@@ -1,4 +1,5 @@
 import {
+  AVATAR_SLOT,
   MOVEMENT,
   MODE_NORMAL,
   WorldCollision,
@@ -94,7 +95,7 @@ export class LocalPlayer {
 
   constructor(collision: WorldCollision) {
     this.collision = collision;
-    this.character = new PlayerCharacter(1);
+    this.character = new PlayerCharacter(AVATAR_SLOT);
     this.previous.x = this.motion.x;
     this.previous.y = this.motion.y;
     this.previous.z = this.motion.z;

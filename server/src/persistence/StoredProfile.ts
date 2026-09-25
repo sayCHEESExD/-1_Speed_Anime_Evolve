@@ -99,8 +99,8 @@ export const emptyProgress = (): ProgressFields => ({
   wins: 0,
   lifetimeWins: 0,
   rebirths: 0,
-  ownedCharacters: 1,
-  characterSlot: 1,
+  ownedCharacters: 0,
+  characterSlot: 0,
   ownedTrails: 1,
   trailId: 0,
   charms: [],
@@ -116,8 +116,6 @@ export const progressOf = (source: Partial<ProgressFields>): ProgressFields => {
   const out = emptyProgress();
   for (const key of NUMERIC_KEYS) out[key] = numeric(source[key]);
   if (out.level < 1) out.level = 1;
-  if (out.ownedCharacters === 0) out.ownedCharacters = 1;
-  if (out.characterSlot === 0) out.characterSlot = 1;
   if (out.ownedTrails === 0) out.ownedTrails = 1;
   out.charms = numbers(source.charms, 64);
   out.equippedCharms = numbers(source.equippedCharms, 3);
